@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCardio AI | Next-Gen Monitoring</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        'pulse-glow': {
+                            '0%, 100%': { opacity: 1, boxShadow: '0 0 20px rgba(239, 68, 68, 0.5)' },
+                            '50%': { opacity: .5, boxShadow: '0 0 10px rgba(239, 68, 68, 0.2)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; }
+        
+        /* Advanced Glassmorphism */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-glass {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .input-glass:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .heart-beat { animation: beat 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        @keyframes beat {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(239,68,68,0)); }
+            15% { transform: scale(1.15); filter: drop-shadow(0 0 10px rgba(239,68,68,0.6)); }
+            30% { transform: scale(1); }
+            45% { transform: scale(1.15); filter: drop-shadow(0 0 10px rgba(239,68,68,0.6)); }
+            60% { transform: scale(1); }
+        }
+
+        /* Ambient Background blobs */
+        .bg-glow-1 { background: radial-gradient(circle, rgba(59,130,246,0.3) 0%, rgba(0,0,0,0) 70%); }
+        .bg-glow-2 { background: radial-gradient(circle, rgba(139,92,246,0.2) 0%, rgba(0,0,0,0) 70%); }
+    </style>
+</head>
+
+<body class="min-h-screen relative overflow-x-hidden selection:bg-blue-500 selection:text-white">
+
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[100px] animate-blob"></div>
+        <div class="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-purple-600/20 rounded-full blur-[100px] animate-blob animation-delay-2000"></div>
+        <div class="absolute bottom-[-10%] left-[20%] w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[120px] animate-blob animation-delay-4000"></div>
+    </div>
+
+    <div id="toast" class="fixed top-6 right-6 z-50 transform transition-all duration-500 translate-x-[150%] opacity-0">
+        <div class="glass-panel border-l-4 border-blue-500 rounded-lg p-4 flex items-center pr-8 min-w-[320px]">
+            <div class="bg-blue-500/20 rounded-full p-2 mr-3">
+                <i data-lucide="mail" class="h-5 w-5 text-blue-400"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-sm text-white">Notification</h4>
+                <p class="text-xs text-slate-400 mt-0.5">Message content here.</p>
+            </div>
+        </div>
+    </div>
+
+    <header class="fixed w-full z-40 top-0 transition-all duration-300">
+        <div class="bg-slate-900/10 backdrop-blur-md border-b border-white/5">
+            <div class="container mx-auto px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3 group cursor-pointer">
+                    <div class="bg-gradient-to-tr from-blue-600 to-cyan-500 text-white p-2 rounded-lg shadow-[0_0_15px_rgba(59,130,246,0.5)] group-hover:shadow-[0_0_25px_rgba(59,130,246,0.7)] transition-shadow">
+                        <i data-lucide="activity" class="h-5 w-5"></i>
+                    </div>
+                    <h1 class="text-xl font-bold tracking-tight text-white">SmartCardio <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">AI</span></h1>
+                </div>
+                
+                <div id="system-status" class="hidden items-center space-x-3 bg-slate-800/50 px-4 py-1.5 rounded-full border border-white/10 shadow-lg">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-xs font-medium text-emerald-400 tracking-wide uppercase">System Active</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 pt-32 pb-12">
+        
+        <div id="registration-view" class="max-w-md mx-auto fade-in mt-10">
+            <div class="glass-panel rounded-2xl overflow-hidden">
+                <div class="bg-slate-900/50 p-8 border-b border-white/5 relative">
+                    <div class="absolute top-0 right-0 p-8 opacity-20">
+                        <i data-lucide="cpu" class="h-24 w-24 text-blue-500"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white mb-2">Initialize System</h2>
+                    <p class="text-slate-400 text-sm">Configure AI parameters for patient monitoring.</p>
+                </div>
+
+                <form id="reg-form" class="p-8 space-y-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-blue-400 mb-1.5 ml-1">Patient Identity</label>
+                            <input type="text" id="name" required class="w-full input-glass rounded-xl px-4 py-3.5 outline-none transition-all placeholder-slate-600" placeholder="Full Name">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-blue-400 mb-1.5 ml-1">Gender</label>
+                                <select id="gender" class="w-full input-glass rounded-xl px-4 py-3.5 outline-none transition-all text-slate-300">
+                                    <option>Male</option>
+                                    <option>Female</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-blue-400 mb-1.5 ml-1">Age</label>
+                                <input type="number" id="age" required class="w-full input-glass rounded-xl px-4 py-3.5 outline-none transition-all placeholder-slate-600" placeholder="Years">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-blue-400 mb-1.5 ml-1">Emergency Contact</label>
+                            <div class="relative group">
+                                <i data-lucide="mail" class="absolute left-4 top-3.5 h-5 w-5 text-slate-500 group-focus-within:text-blue-400 transition-colors"></i>
+                                <input type="email" id="email" required class="w-full input-glass rounded-xl pl-12 pr-4 py-3.5 outline-none transition-all placeholder-slate-600" placeholder="doctor@hospital.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-white/5">
+                        <label class="flex items-center space-x-3 cursor-pointer mb-4 p-2 hover:bg-white/5 rounded-lg transition-colors">
+                            <input type="checkbox" id="sim" checked class="h-4 w-4 text-blue-600 rounded bg-slate-800 border-slate-600 focus:ring-blue-500 focus:ring-offset-slate-900">
+                            <span class="text-sm text-slate-300">Enable Simulation Mode</span>
+                        </label>
+                        <div id="api-inputs" class="space-y-3 hidden animate-in slide-in-from-top-2">
+                            <input type="text" id="channelId" class="w-full input-glass text-xs p-3 rounded-lg" placeholder="ThingSpeak Channel ID">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transform hover:-translate-y-0.5 transition-all flex justify-center items-center group">
+                        <span>Launch Monitor</span> 
+                        <i data-lucide="chevron-right" class="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div id="monitor-view" class="hidden fade-in max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+                
+                <div class="lg:col-span-3 glass-panel rounded-2xl p-6 flex flex-col justify-between h-full min-h-[300px]">
+                    <div>
+                        <div class="flex items-center space-x-2 mb-6 opacity-70">
+                            <i data-lucide="user-circle" class="h-4 w-4 text-blue-400"></i>
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-300">Subject Data</h3>
+                        </div>
+                        
+                        <div class="text-center mb-8">
+                            <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-tr from-slate-700 to-slate-800 border-2 border-blue-500/30 flex items-center justify-center text-white text-3xl font-bold shadow-[0_0_20px_rgba(59,130,246,0.2)] mb-4">
+                                <span id="avatar-initial">U</span>
+                            </div>
+                            <h2 id="display-name" class="text-xl font-bold text-white leading-tight mb-1">User</h2>
+                            <p id="display-email" class="text-xs text-blue-400/80 truncate px-2">email@example.com</p>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="flex justify-between text-sm bg-slate-800/50 p-3 rounded-lg border border-white/5">
+                                <span class="text-slate-400">Gender</span>
+                                <span id="display-gender" class="font-medium text-white">-</span>
+                            </div>
+                            <div class="flex justify-between text-sm bg-slate-800/50 p-3 rounded-lg border border-white/5">
+                                <span class="text-slate-400">Age</span>
+                                <span id="display-age" class="font-medium text-white">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="location.reload()" class="mt-6 w-full py-3 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white border border-slate-700 hover:bg-red-500/10 hover:border-red-500/50 rounded-lg transition-all flex justify-center items-center">
+                        <i data-lucide="power" class="h-3 w-3 mr-2"></i> Terminate
+                    </button>
+                </div>
+
+                <div id="status-card" class="lg:col-span-9 bg-slate-900 rounded-2xl p-8 relative overflow-hidden transition-all duration-700 border border-white/10 group">
+                    <div id="status-bg" class="absolute inset-0 bg-gradient-to-r from-blue-900/40 to-slate-900 transition-colors duration-700"></div>
+                    <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100"></div>
+                    
+                    <div class="relative z-10 flex flex-col md:flex-row h-full justify-between items-center md:items-start gap-8">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="relative flex h-3 w-3">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                                </span>
+                                <span class="text-sm font-bold text-blue-200/70 uppercase tracking-[0.2em]">Real-time BPM</span>
+                            </div>
+                            
+                            <div class="flex items-baseline space-x-4">
+                                <h1 class="text-8xl md:text-9xl font-bold tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] tabular-nums" id="current-bpm">--</h1>
+                                <span class="text-xl text-slate-400 font-light">bpm</span>
+                            </div>
+
+                            <div class="mt-6 space-y-2">
+                                <div id="ai-badge" class="inline-flex items-center px-4 py-2 rounded-full bg-blue-500/10 backdrop-blur-md border border-blue-500/20 text-blue-300 text-sm font-semibold transition-all duration-500">
+                                    <i data-lucide="loader-2" class="animate-spin h-4 w-4 mr-2"></i> Calibrating AI Model...
+                                </div>
+                                <p class="text-xs text-slate-500 font-mono pl-1" id="last-update">Waiting for data stream...</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-center h-full pr-0 md:pr-10">
+                            <div class="relative">
+                                <div class="absolute inset-0 bg-red-500/30 blur-[40px] rounded-full scale-0 transition-transform duration-300" id="heart-glow"></div>
+                                <i data-lucide="heart" id="heart-icon" class="h-32 w-32 md:h-48 md:w-48 text-white/10 fill-white/5 transition-all duration-300 stroke-[0.5px]"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6 h-[400px] border-t border-white/10 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500 opacity-50"></div>
+                
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-sm font-bold text-slate-300 flex items-center tracking-wide">
+                        <i data-lucide="activity" class="h-4 w-4 mr-2 text-cyan-400"></i> 
+                        LIVE ELECTROCARDIOGRAPH
+                    </h3>
+                    <div class="flex space-x-3">
+                         <div class="flex items-center space-x-2 text-[10px] text-slate-500 uppercase font-mono">
+                            <span class="w-2 h-2 rounded-full bg-cyan-500"></span> <span>Normal</span>
+                            <span class="w-2 h-2 rounded-full bg-red-500 ml-2"></span> <span>Critical</span>
+                        </div>
+                        <button onclick="simulateCritical()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-400 px-3 py-1.5 rounded border border-white/5 transition-colors">
+                            Test Trigger
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="h-[300px] w-full relative">
+                    <div class="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+                    <canvas id="bpmChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- INITIALIZATION ---
+        (function () {
+            // YOUR REAL PUBLIC KEY (From Screenshot)
+            emailjs.init("bgAW1dXFrt3A5Tozw");
+        })();
+
+        lucide.createIcons();
+        let chartInstance = null;
+        let pollingInterval = null;
+
+        // EMAIL LOGIC VARIABLES
+        let lastEmailTime = 0;
+        const EMAIL_COOLDOWN = 60000; 
+        let currentEmail = "";
+
+        // --- CHART SETUP ---
+        function initChart() {
+            const ctx = document.getElementById('bpmChart').getContext('2d');
+            
+            // Create gradient
+            let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(6, 182, 212, 0.4)'); // Cyan top
+            gradient.addColorStop(1, 'rgba(6, 182, 212, 0.0)'); // Transparent bottom
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'BPM',
+                        data: [],
+                        borderColor: '#06b6d4', // Cyan-500
+                        borderWidth: 3,
+                        backgroundColor: gradient,
+                        pointBackgroundColor: '#0f172a',
+                        pointBorderColor: '#22d3ee', // Cyan-400
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        tension: 0.4, // Smooth curves
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleColor: '#94a3b8',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 10,
+                        displayColors: false,
+                    }},
+                    scales: {
+                        x: { display: false },
+                        y: { 
+                            min: 40, 
+                            max: 160, 
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#64748b', font: { family: 'Courier New' } } 
+                        }
+                    },
+                    animation: { duration: 0 }
+                }
+            });
+        }
+
+        // --- VIEW CONTROLLER ---
+        function switchView(viewName) {
+            const regView = document.getElementById('registration-view');
+            const monView = document.getElementById('monitor-view');
+            const statusIndicator = document.getElementById('system-status');
+
+            if (viewName === 'monitor') {
+                regView.classList.add('hidden');
+                monView.classList.remove('hidden');
+                statusIndicator.classList.remove('hidden');
+                statusIndicator.classList.add('flex');
+                if (!chartInstance) initChart();
+                startDataFetching();
+            } else {
+                regView.classList.remove('hidden');
+                monView.classList.add('hidden');
+                statusIndicator.classList.add('hidden');
+                statusIndicator.classList.remove('flex');
+                if (pollingInterval) clearInterval(pollingInterval);
+            }
+        }
+
+        // --- REGISTRATION LOGIC ---
+        document.getElementById('sim').addEventListener('change', (e) => {
+            document.getElementById('api-inputs').classList.toggle('hidden', e.target.checked);
+        });
+
+        document.getElementById('reg-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            currentEmail = document.getElementById('email').value;
+
+            document.getElementById('display-name').textContent = name;
+            document.getElementById('avatar-initial').textContent = name.charAt(0).toUpperCase();
+            document.getElementById('display-gender').textContent = document.getElementById('gender').value;
+            document.getElementById('display-age').textContent = document.getElementById('age').value + " yrs";
+            document.getElementById('display-email').textContent = currentEmail;
+
+            switchView('monitor');
+        });
+
+        // --- CORE AI & ALERT LOGIC ---
+        function analyzeHeartRate(bpm) {
+            if (bpm < 10) return { 
+                status: "NO_SIGNAL", 
+                text: "Signal Lost", 
+                bgClass: "from-slate-800 to-slate-900",
+                borderClass: "border-slate-700",
+                badgeClass: "bg-slate-700 text-slate-300 border-slate-600",
+                iconColor: "text-slate-700"
+            };
+            
+            if (bpm > 100) return { 
+                status: "CRITICAL_HIGH", 
+                text: "TACHYCARDIA DETECTED", 
+                bgClass: "from-red-900/80 to-slate-900",
+                borderClass: "border-red-500/50",
+                badgeClass: "bg-red-500 text-white border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse",
+                iconColor: "text-red-500"
+            };
+            
+            if (bpm < 60) return { 
+                status: "CRITICAL_LOW", 
+                text: "BRADYCARDIA DETECTED", 
+                bgClass: "from-orange-900/80 to-slate-900",
+                borderClass: "border-orange-500/50",
+                badgeClass: "bg-orange-500 text-white border-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.5)] animate-pulse",
+                iconColor: "text-orange-500"
+            };
+
+            return { 
+                status: "NORMAL", 
+                text: "Vitals Stable", 
+                bgClass: "from-emerald-900/40 to-slate-900",
+                borderClass: "border-emerald-500/30",
+                badgeClass: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+                iconColor: "text-emerald-500"
+            };
+        }
+
+        function handleEmailAlert(bpm, condition) {
+            const now = Date.now();
+            if ((condition.status === "CRITICAL_HIGH" || condition.status === "CRITICAL_LOW") &&
+                (now - lastEmailTime > EMAIL_COOLDOWN)) {
+                sendEmail(bpm, condition.text);
+                lastEmailTime = now;
+            }
+        }
+
+        function sendEmail(bpm, alertType) {
+            showToast("Alert Triggered", `Sending emergency alert for ${bpm} BPM...`);
+
+            // *** FIXED SERVICE ID HERE ***
+            const serviceID = "service_mrnpmzi"; 
+            const templateID = "template_5zja7v3";
+
+            const templateParams = {
+                to_email: currentEmail,
+                name: document.getElementById('name').value, 
+                bpm_value: bpm,
+                alert_type: alertType,
+                message: `URGENT MEDICAL ALERT: Patient heart rate detected at ${bpm} BPM. AI Assessment: ${alertType}.`
+            };
+
+            emailjs.send(serviceID, templateID, templateParams)
+                .then(() => {
+                    showToast("Email Dispatched", `Alert successfully sent to guardian.`);
+                }, (err) => {
+                    console.log('FAILED...', err);
+                    showToast("Transmission Error", "Failed to reach email server.");
+                });
+        }
+
+        function showToast(title, message) {
+            const toast = document.getElementById('toast');
+            toast.querySelector('h4').textContent = title;
+            toast.querySelector('p').textContent = message;
+            toast.classList.remove('translate-x-[150%]', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-x-[150%]', 'opacity-0');
+            }, 4000);
+        }
+
+        // --- DATA LOOP ---
+        function startDataFetching() {
+            const isSimulating = document.getElementById('sim').checked;
+            const channelId = document.getElementById('channelId').value;
+
+            const fetchData = async () => {
+                let bpm = 0;
+                if (isSimulating) {
+                    const r = Math.random();
+                    if (r > 0.92) bpm = 115; // Spike
+                    else if (r < 0.08) bpm = 55; // Drop
+                    else bpm = Math.floor(Math.random() * (90 - 65 + 1)) + 65;
+                } else {
+                    try {
+                        const response = await fetch(`https://api.thingspeak.com/channels/${channelId}/feeds.json?results=1`);
+                        const data = await response.json();
+                        if (data.feeds.length > 0) bpm = parseFloat(data.feeds[0].field1);
+                    } catch (e) { console.error(e); }
+                }
+                updateDashboard(bpm);
+            };
+
+            fetchData();
+            pollingInterval = setInterval(fetchData, 3000);
+        }
+
+        function updateDashboard(bpm) {
+            if (!bpm) bpm = 0;
+            const analysis = analyzeHeartRate(bpm);
+
+            document.getElementById('current-bpm').textContent = bpm;
+            
+            // Visual Updates
+            const cardBg = document.getElementById('status-bg');
+            const cardContainer = document.getElementById('status-card');
+            const badge = document.getElementById('ai-badge');
+            const heartIcon = document.getElementById('heart-icon');
+            const heartGlow = document.getElementById('heart-glow');
+
+            // Apply Classes
+            cardBg.className = `absolute inset-0 bg-gradient-to-r transition-colors duration-1000 ${analysis.bgClass}`;
+            cardContainer.className = `lg:col-span-9 bg-slate-900 rounded-2xl p-8 relative overflow-hidden transition-all duration-700 border group ${analysis.borderClass}`;
+            
+            // Badge Update
+            badge.className = `inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold transition-all duration-500 ${analysis.badgeClass}`;
+            badge.innerHTML = `<i data-lucide="${analysis.status.includes('CRITICAL') ? 'alert-triangle' : 'activity'}" class="h-4 w-4 mr-2"></i> ${analysis.text}`;
+            lucide.createIcons();
+
+            // Heart Animation
+            heartIcon.style.animationDuration = bpm > 0 ? `${60 / bpm}s` : '0s';
+            heartIcon.className = `h-32 w-32 md:h-48 md:w-48 transition-all duration-300 stroke-[1px] ${analysis.iconColor} ${bpm > 0 ? 'fill-current opacity-90' : 'fill-white/5 opacity-20'}`;
+            
+            if (bpm > 0) {
+                heartIcon.classList.add('heart-beat');
+                heartGlow.classList.remove('scale-0');
+            } else {
+                heartIcon.classList.remove('heart-beat');
+                heartGlow.classList.add('scale-0');
+            }
+
+            document.getElementById('last-update').textContent = `Sync: ${new Date().toLocaleTimeString()}`;
+
+            // Chart Update
+            if (chartInstance) {
+                const now = new Date().toLocaleTimeString();
+                chartInstance.data.labels.push(now);
+                chartInstance.data.datasets[0].data.push(bpm);
+                
+                // Dynamic Chart Color based on status
+                const color = analysis.status.includes('HIGH') ? '#ef4444' : 
+                              analysis.status.includes('LOW') ? '#f97316' : '#06b6d4';
+                
+                chartInstance.data.datasets[0].borderColor = color;
+                chartInstance.data.datasets[0].pointBorderColor = color;
+
+                if (chartInstance.data.labels.length > 20) {
+                    chartInstance.data.labels.shift();
+                    chartInstance.data.datasets[0].data.shift();
+                }
+                chartInstance.update();
+            }
+
+            handleEmailAlert(bpm, analysis);
+        }
+
+        function simulateCritical() {
+            updateDashboard(125);
+        }
+    </script>
+</body>
+</html>
